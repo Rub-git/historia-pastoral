@@ -1,0 +1,381 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/historia_pastoral/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  fullName      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Settings
+  language      String    @default("es")
+  inactiveThresholdDays Int @default(30)
+  emailNotifications Boolean @default(false)
+  
+  // Role and Team
+  role          String    @default("owner") // owner, admin, leader
+  teamOwnerId   String?   // If part of a team, points to the owner's userId
+  teamOwner     User?     @relation("TeamMembers", fields: [teamOwnerId], references: [id])
+  teamMembers   User[]    @relation("TeamMembers")
+  
+  // Stripe subscription fields
+  stripeCustomerId     String?   @unique
+  subscriptionStatus   String    @default("trialing") // trialing, active, canceled, past_due, inactive
+  subscriptionPlan     String    @default("trial") // trial, pastor, team, church
+  subscriptionId       String?
+  subscriptionEndDate  DateTime?
+  trialEndsAt          DateTime?
+  maxMembers           Int       @default(25) // Limit based on plan
+  maxTeamMembers       Int       @default(0)  // 0 for pastor, 3 for team, 10 for church
+  
+  // Relations
+  members       Member[]
+  students      Student[]
+  notifications Notification[]
+  ministryPositions MinistryPosition[]
+  teamInvitations TeamInvitation[]
+  resources     Resource[]
+  ministryGroups MinistryGroup[]
+  calendarEvents CalendarEvent[]
+}
+
+model TeamInvitation {
+  id          String    @id @default(cuid())
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  email       String
+  role        String    @default("leader") // admin, leader
+  status      String    @default("pending") // pending, accepted, rejected
+  token       String    @unique
+  expiresAt   DateTime
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([ownerId])
+  @@index([email])
+}
+
+model Member {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic info
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String?
+  address       String?
+  birthDate     DateTime?
+  notes         String?   @db.Text
+  
+  // Personal and family context (optional pastoral fields)
+  maritalStatus       String?   // soltero, casado, viudo, divorciado, otro
+  employmentStatus    String?   // empleado, independiente, retirado, estudiante, buscando_empleo, otro
+  occupation          String?
+  hasChildren         String?   // si, no, or number as text
+  previousChurch      String?   @db.Text  // Open field for church background
+  countryOfOrigin     String?
+  
+  // Discipleship Pipeline fields
+  discipleshipStatus    String    @default("NONE")  // NONE, INTEREST, STUDYING, PREPARING, BAPTIZED
+  currentLesson         String?
+  lessonsCompleted      Int       @default(0)
+  discipleBaptismDate   DateTime?
+  mentorAssigned        String?
+  consolidationStage    String    @default("NONE")  // NONE, 30_DAYS, 60_DAYS, 90_DAYS, COMPLETED
+  baptismCohort         String?   // e.g., "Spring 2026 Campaign"
+  
+  // Flags
+  isSensitive   Boolean   @default(false)
+  underObservation Boolean @default(false)
+  isActive      Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  spiritualHistory SpiritualHistory?
+  accompaniments   AccompanimentRecord[]
+  
+  @@index([userId])
+}
+
+model SpiritualHistory {
+  id              String    @id @default(cuid())
+  memberId        String    @unique
+  member          Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  // Spiritual dates
+  conversionDate  DateTime?
+  baptismDate     DateTime?
+  
+  // Spiritual state: new_believer, active, in_process, in_crisis, restoration
+  spiritualState  String    @default("active")
+  
+  // Growth stage: initial, development, leadership, accompaniment
+  growthStage     String    @default("initial")
+  
+  // Open fields for pastoral discernment
+  spiritualGifts  String?   @db.Text
+  growthAreas     String?   @db.Text
+  confidentialObs String?   @db.Text
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AccompanimentRecord {
+  id              String    @id @default(cuid())
+  memberId        String
+  member          Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  // Encounter details
+  encounterDate   DateTime
+  encounterType   String    // visit, counseling, call, hospital, prayer, other
+  reason          String?   @db.Text
+  observations    String?   @db.Text
+  commitments     String?   @db.Text
+  nextSteps       String?   @db.Text
+  followUpDate    DateTime?
+  
+  // Flags
+  followUpCompleted Boolean @default(false)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([memberId])
+  @@index([followUpDate])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  message     String    @db.Text
+  type        String    // follow_up, inactive_member, sensitive_case
+  relatedId   String?   // ID of related member or accompaniment
+  isRead      Boolean   @default(false)
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([token])
+}
+
+model Student {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic info
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  
+  address             String?
+  
+  // Discipleship Pipeline fields
+  discipleshipStatus  String    @default("INTEREST")  // INTEREST, STUDYING, PREPARING, BAPTIZED
+  currentLesson       String?
+  lessonsCompleted    Int       @default(0)
+  baptismDate         DateTime?
+  mentorAssigned      String?
+  consolidationStage  String    @default("NONE")  // NONE, 30_DAYS, 60_DAYS, 90_DAYS, COMPLETED
+  baptismCohort       String?
+  notes               String?   @db.Text
+  
+  // 90-Day Retention System
+  retention90Status       String?   // PENDING, RETAINED, NOT_RETAINED
+  retention90DueDate      DateTime?
+  retention90EvaluatedAt  DateTime?
+  integrationConfirmedAt  DateTime?
+  
+  // When baptized, link to Member record
+  memberId            String?   @unique
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([discipleshipStatus])
+}
+
+// Ministry Leadership Tracking
+model MinistryPosition {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String    // Position name
+  category    String?   // Optional category for grouping
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  
+  assignments MinistryAssignment[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([userId])
+  @@unique([userId, name])
+}
+
+model MinistryAssignment {
+  id            String    @id @default(cuid())
+  positionId    String
+  position      MinistryPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  
+  year          Int       // Year of assignment
+  personName    String    // Name of the person assigned
+  phone         String?
+  email         String?
+  notes         String?   @db.Text
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([positionId])
+  @@index([year])
+}
+
+// Ministry Groups (Conquistadores, Grupos Pequeños, etc.)
+model MinistryGroup {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name          String    // E.g., "Conquistadores", "Grupo Pequeño Esperanza"
+  type          String    // conquistadores, aventureros, guias_mayores, grupo_pequeno, hombres, mujeres, jovenes, escuela_sabatica, otro
+  customName    String?   // Optional custom name for the group (e.g., "Los Valientes")
+  motto         String?   // Lema o frase distintiva
+  description   String?   @db.Text
+  
+  // For Escuela Sabática
+  classNumber   String?   // Class number (e.g., "Clase 1", "Adultos A")
+  teacher       String?   // Main teacher name
+  
+  isActive      Boolean   @default(true)
+  sortOrder     Int       @default(0)
+  
+  members       MinistryGroupMember[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([type])
+}
+
+model MinistryGroupMember {
+  id            String    @id @default(cuid())
+  groupId       String
+  group         MinistryGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  fullName      String
+  phone         String?
+  email         String?
+  role          String?   // E.g., "Director", "Consejero", "Miembro", "Maestro"
+  notes         String?   @db.Text
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([groupId])
+}
+
+// Resources for pastors and leaders
+model Resource {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String?   @db.Text
+  category      String    // manual, guide, job_description, training, other
+  
+  // Type: 'link' for external URLs, 'file' for uploaded files
+  resourceType  String    @default("link")
+  
+  // For external links
+  externalUrl   String?
+  
+  // For uploaded files (S3)
+  cloud_storage_path  String?
+  fileName            String?
+  fileSize            Int?
+  isPublic            Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([category])
+}
+
+// Calendar Events
+model CalendarEvent {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String?   @db.Text
+  
+  // Event timing
+  startDate     DateTime
+  endDate       DateTime?
+  allDay        Boolean   @default(false)
+  
+  // Event type/category
+  eventType     String    @default("general") // general, worship, meeting, visit, training, special
+  
+  // Location
+  location      String?
+  
+  // Recurrence (optional)
+  isRecurring   Boolean   @default(false)
+  recurrenceRule String?  // weekly, monthly, etc.
+  
+  // Reminder settings
+  reminderEnabled Boolean  @default(false)
+  reminderMinutes Int?     // minutes before event
+  reminderSent    Boolean  @default(false)
+  
+  // Status
+  isActive      Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([startDate])
+  @@index([eventType])
+}

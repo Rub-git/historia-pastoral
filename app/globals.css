@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sage-50: #f6f7f6;
+  --sage-100: #e3e7e3;
+  --sage-200: #c7d1c7;
+  --sage-300: #a3b3a3;
+  --sage-400: #7d917d;
+  --sage-500: #617461;
+  --sage-600: #4d5d4d;
+  --sage-700: #404c40;
+  --sage-800: #363f36;
+  --sage-900: #2e352e;
+  
+  --warm-50: #fdfcfb;
+  --warm-100: #f9f5f2;
+  --warm-200: #f3ebe4;
+  --warm-300: #e8d9cc;
+  --warm-400: #d4bba3;
+  --warm-500: #c19d7b;
+  --warm-600: #a98260;
+  --warm-700: #8a6a4e;
+  --warm-800: #715844;
+  --warm-900: #5d4a3a;
+}
+
+@layer base {
+  * {
+    @apply border-sage-200;
+  }
+  
+  body {
+    @apply bg-warm-50 text-sage-800;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .bg-sage-50 { background-color: var(--sage-50); }
+  .bg-sage-100 { background-color: var(--sage-100); }
+  .bg-sage-200 { background-color: var(--sage-200); }
+  .bg-sage-500 { background-color: var(--sage-500); }
+  .bg-sage-600 { background-color: var(--sage-600); }
+  .bg-sage-700 { background-color: var(--sage-700); }
+  
+  .bg-warm-50 { background-color: var(--warm-50); }
+  .bg-warm-100 { background-color: var(--warm-100); }
+  .bg-warm-200 { background-color: var(--warm-200); }
+  
+  .text-sage-500 { color: var(--sage-500); }
+  .text-sage-600 { color: var(--sage-600); }
+  .text-sage-700 { color: var(--sage-700); }
+  .text-sage-800 { color: var(--sage-800); }
+  
+  .text-warm-600 { color: var(--warm-600); }
+  .text-warm-700 { color: var(--warm-700); }
+  
+  .border-sage-200 { border-color: var(--sage-200); }
+  .border-sage-300 { border-color: var(--sage-300); }
+  
+  .ring-sage-500 { --tw-ring-color: var(--sage-500); }
+  
+  .hover\:bg-sage-100:hover { background-color: var(--sage-100); }
+  .hover\:bg-sage-600:hover { background-color: var(--sage-600); }
+  .hover\:bg-sage-700:hover { background-color: var(--sage-700); }
+  
+  .focus\:ring-sage-500:focus { --tw-ring-color: var(--sage-500); }
+}
+
+[data-hydration-error] { display: none !important; }
