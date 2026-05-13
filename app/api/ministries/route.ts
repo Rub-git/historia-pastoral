@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { getOwnerUserId } from '@/lib/get-owner-id';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Default ministry positions
 const DEFAULT_POSITIONS = [

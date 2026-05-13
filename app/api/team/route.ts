@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // GET - List team members and pending invitations
 export async function GET() {

@@ -6,6 +6,7 @@ import { getStripeClient } from '@/lib/stripe';
 
 // Force Node.js runtime for Stripe
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // APP_URL must be set in environment
 const APP_URL = process.env.APP_URL;

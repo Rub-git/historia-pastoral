@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { getOwnerUserId } from '@/lib/get-owner-id';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // POST - Add member to a group
 export async function POST(request: Request) {

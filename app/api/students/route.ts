@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { getOwnerUserId } from '@/lib/get-owner-id';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // GET all students for the current user (or team owner)
 export async function GET() {

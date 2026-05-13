@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { getOwnerUserId } from '@/lib/get-owner-id';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // GET all ministry groups
 export async function GET(request: Request) {
