@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { stripe } from '@/lib/stripe';
+import { getStripeClient } from '@/lib/stripe';
 
 // Force Node.js runtime for Stripe
 export const runtime = 'nodejs';
@@ -65,6 +65,8 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    const stripe = getStripeClient();
 
     // Create checkout session with customer_email
     // Let Stripe create the customer automatically in LIVE mode

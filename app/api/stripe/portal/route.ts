@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import { stripe } from '@/lib/stripe';
+import { getStripeClient } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const origin = req.headers.get('origin') || 'http://localhost:3000';
+    const stripe = getStripeClient();
 
     // Create portal session
     const portalSession = await stripe.billingPortal.sessions.create({
